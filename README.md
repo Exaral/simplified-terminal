@@ -4,4 +4,4 @@ You can in it, create folders, install or remove programs via apt, format partit
 
 Steps to installation:
 
-First download, the simplified-terminal file, on the folder Files
+First download, the simplified-terminal file, on the releases
