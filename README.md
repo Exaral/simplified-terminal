@@ -4,4 +4,13 @@ You can in it, create folders, install or remove programs via apt, format partit
 
 Steps to installation:
 
-First download, the simplified-terminal file, on the releases
+First download, the simplified-terminal file, on the releases, and so run this command
+```bash
+sudo cp simplified-terminal /usr/local/bin/
+```
+Ensure you are on the folder where is the file.
+Now, to run the command type
+```bash
+simplified-terminal
+```
+And its DONE!!!
