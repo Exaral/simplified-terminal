@@ -1,16 +1,21 @@
 # simplified-terminal
-Its a simplified terminal, without typing so much, for **ONLY Linux**! Enjoy! Tottaly Open-Source!
-You can in it, create folders, install or remove programs via apt, format partitions or disks, Heimdall your phone, run Windows programs via Wine, edit or create text files via nano, enter in folders via cd and remove files via rm!
+It is a simplified terminal that reduces typing, made **ONLY for Linux** (Windows support coming soon!). No longer Open-Source.
 
-Steps to installation:
+### Features:
+With it, you can create folders, install or remove programs via apt, format partitions or disks, flash your phone with Heimdall, run Windows programs via Wine, edit or create text files via nano, change directories via cd (Note: cd is currently broken and will be removed), and remove files via rm!
 
-First download, the simplified-terminal file, on the releases, and so run this command
+### Installation Steps:
+
+First, download the `simplified-terminal` file from the releases page, and then run this command:
 ```bash
 sudo cp simplified-terminal /usr/local/bin/
 ```
-Ensure you are on the folder where is the file.
-Now, to run the command type
+*Ensure you are in the folder where the downloaded file is located.*
+
+Now, to run the terminal, just type:
 ```bash
 simplified-terminal
 ```
-And its DONE!!!
+And it's DONE!!!
+
+© 2026 - Exaral. All rights reserved.
