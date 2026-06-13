@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simplified Terminal — Exaral</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#000000;
+      --panel:#071014;
+      --neon-green:#00ff88;
+      --neon-cyan:#00d1ff;
+      --muted:#9aa6b2;
+      --glass: rgba(255,255,255,0.03);
+      --accent-glow: 0 28px 120px rgba(0,255,136,0.22), inset 0 3px 0 rgba(255,255,255,0.03);
+      --radius:12px;
+      --mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, "Courier New", monospace;
+      --card-border: rgba(0,255,136,0.06);
+      --shadow: 0 18px 60px rgba(0,0,0,0.7);
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(0,209,255,0.03), transparent 8%),
+        radial-gradient(900px 400px at 90% 90%, rgba(0,255,136,0.02), transparent 6%),
+        var(--bg);
+      color:var(--neon-green);
+      font-family:var(--mono);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      line-height:1.45;
+      padding:28px;
+      box-sizing:border-box;
+      position:relative;
+      overflow-x:hidden;
+    }
+
+    /* Green orb background (subtle glow circle behind content) */
+    .orb{
+      position: absolute;
+      right: 6%;
+      top: 8%;
+      width: 680px;
+      height: 680px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 35% 30%,
+          rgba(0,255,136,0.28) 0%,
+          rgba(0,255,136,0.16) 18%,
+          rgba(0,255,136,0.08) 30%,
+          rgba(0,255,136,0.02) 45%,
+          transparent 60%);
+      filter: blur(48px);
+      transform: translateZ(0);
+      animation: orbPulse 6.5s ease-in-out infinite;
+      mix-blend-mode: screen;
+    }
+    @keyframes orbPulse{
+      0%{ transform: translateY(0) scale(1); opacity:0.95; filter: blur(48px); }
+      50%{ transform: translateY(-12px) scale(1.03); opacity:1; filter: blur(56px); }
+      100%{ transform: translateY(0) scale(1); opacity:0.95; filter: blur(48px); }
+    }
+
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:28px;
+      align-items:start;
+      position:relative;
+      z-index:1; /* above orb */
+    }
+
+    /* Terminal-like content */
+    .terminal {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--radius);
+      padding:28px;
+      box-shadow: var(--accent-glow);
+      border:1px solid var(--card-border);
+      min-height:560px;
+      position:relative;
+      overflow:hidden;
+      z-index:2;
+    }
+
+    .term-header{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-bottom:18px;
+    }
+
+    /* window control buttons moved to the right and restyled (keeps buttons but on the right) */
+    .win-controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-left:12px;
+    }
+    .win-btn{
+      width:36px;
+      height:18px;
+      border-radius:6px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      font-size:12px;
+      user-select:none;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+    }
+
+    .term-title{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+    }
+
+    /* place title left, controls right */
+    .term-header .left { display:flex; align-items:center; gap:12px; flex:1; }
+    .term-header .right { display:flex; align-items:center; gap:12px; }
+
+    .screen{
+      background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.4));
+      border-radius:10px;
+      padding:18px;
+      min-height:480px;
+      color:var(--neon-green);
+      font-size:15px;
+      overflow:auto;
+      border:1px solid rgba(0,255,136,0.04);
+    }
+
+    .line{ white-space:pre-wrap; margin:6px 0; }
+    .muted{ color:var(--muted); }
+    .cyan{ color:var(--neon-cyan); }
+    .prompt{ color:var(--neon-green); font-weight:700; }
+    .cmd{ color:#bfffe0; }
+    .stdout{ color:#cfeefc; opacity:0.95; }
+
+    .cursor{
+      display:inline-block;
+      width:10px;
+      height:18px;
+      background:var(--neon-green);
+      margin-left:6px;
+      vertical-align:middle;
+      animation:blink 1s steps(2) infinite;
+      border-radius:2px;
+      box-shadow: 0 10px 60px rgba(0,255,136,0.28);
+    }
+    @keyframes blink{ 50%{ opacity:0 } }
+
+    /* Right column: restored layout (release, quick commands, support) */
+    .side{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      z-index:2;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;
+      padding:18px;
+      border:1px solid rgba(0,209,255,0.04);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    }
+    .big-btn{
+      display:inline-block;
+      background:linear-gradient(90deg,var(--neon-green),var(--neon-cyan));
+      color:#00110a;
+      padding:12px 16px;
+      border-radius:10px;
+      font-weight:700;
+      text-decoration:none;
+      box-shadow:0 12px 40px rgba(0,255,136,0.12);
+      border:1px solid rgba(255,255,255,0.06);
+      cursor:pointer;
+      transition:transform .12s ease, box-shadow .12s ease;
+    }
+    .big-btn:hover{ transform:translateY(-3px); box-shadow:0 28px 120px rgba(0,255,136,0.28); }
+
+    .feature-list{ display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+    .feature-item{
+      background:var(--glass);
+      border-radius:8px;
+      padding:10px;
+      border:1px solid rgba(0,255,136,0.03);
+      color:var(--muted);
+      font-size:13px;
+    }
+    .feature-item .fcmd{ color:var(--neon-green); font-weight:700; margin-right:8px; }
+
+    .screenshot{
+      background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.45));
+      border-radius:8px;
+      padding:12px;
+      color:var(--muted);
+      font-size:13px;
+      border:1px dashed rgba(0,255,136,0.04);
+      min-height:120px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    footer{
+      grid-column:1/-1;
+      margin-top:18px;
+      color:var(--muted);
+      text-align:center;
+      font-size:13px;
+    }
+
+    .kbd{
+      background:#071014;
+      border:1px solid rgba(255,255,255,0.03);
+      padding:6px 8px;
+      border-radius:6px;
+      color:var(--neon-cyan);
+      font-weight:700;
+      font-size:13px;
+    }
+
+    .copy-btn{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.03);
+      color:var(--muted);
+      padding:6px 8px;
+      border-radius:6px;
+      cursor:pointer;
+      font-family:var(--mono);
+      font-size:13px;
+    }
+    .copy-btn:hover{ color:var(--neon-cyan); border-color:rgba(0,209,255,0.08); }
+
+    @media (max-width:980px){
+      .wrap{ grid-template-columns: 1fr; padding:0 12px; }
+      .side{ order:2; }
+      .orb{ display:none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- green orb background element -->
+  <div class="orb" aria-hidden="true"></div>
+
+  <div class="wrap">
+
+    <!-- Terminal-like main panel -->
+    <div class="terminal" role="region" aria-label="Terminal preview">
+      <div class="term-header">
+        <div class="left">
+          <div class="term-title">root@exaral:~/Simplified-Terminal</div>
+        </div>
+
+        <div class="right">
+          <div class="win-controls" aria-hidden="true">
+            <div class="win-btn">—</div>
+            <div class="win-btn">▢</div>
+            <div class="win-btn">✕</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen" aria-live="polite" aria-label="Terminal output">
+        <!-- Typed content will appear here -->
+      </div>
+    </div>
+
+    <!-- Right column: restored to the previous layout (release, quick commands, support) -->
+    <aside class="side" aria-label="Controls and features">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div>
+            <div style="font-size:13px;color:var(--muted)">Release</div>
+            <div style="font-weight:700;color:var(--neon-green)">v2.0.0 — Simplified Terminal</div>
+          </div>
+          <div>
+            <a class="big-btn" id="downloadBtn" href="https://github.com/Exaral/simplified-terminal/releases/download/v2.0.0/simplified-terminal" target="_blank" rel="noopener">Download the latest version</a>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;color:var(--muted);font-size:13px">
+          <div class="muted">Status:</div>
+          <div class="stdout" id="stdoutLine">Latest release available on GitHub</div>
+        </div>
+
+        <div style="margin-top:12px;">
+          <div style="font-size:13px;color:var(--muted)">Quick commands</div>
+          <div class="feature-list">
+            <div class="feature-item"><span class="fcmd">$ apt</span><span class="muted">install/remove — Package management (apt)</span></div>
+            <div class="feature-item"><span class="fcmd">$ wine</span><span class="muted">run — Execute Windows binaries via Wine</span></div>
+            <div class="feature-item"><span class="fcmd">$ heimdall</span><span class="muted">flash — Flash Samsung firmware</span></div>
+            <div class="feature-item"><span class="fcmd">$ nano</span><span class="muted">edit — Quick configuration editing</span></div>
+            <div class="feature-item"><span class="fcmd">$ rm</span><span class="muted">delete — Safe removal with confirmation</span></div>
+            <div class="feature-item"><span class="fcmd">$ mkdir</span><span class="muted">create — Create directories (supports -p)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Support card (replaces Deployment) -->
+      <div class="card" aria-hidden="false">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:700;color:var(--neon-cyan)">Support</div>
+          <button class="copy-btn" id="copySupportEmail" data-copy="github.Exaral@outlook.com">COPY EMAIL</button>
+        </div>
+
+        <div style="margin-top:10px;font-size:13px;color:var(--muted)">
+          <p style="margin:6px 0 8px 0;">For technical support (Windows & Linux), contact:</p>
+          <p style="font-weight:700;color:var(--neon-green);margin:0 0 8px 0;">
+            <a href="mailto:github.Exaral@outlook.com" style="color:var(--neon-green);text-decoration:none;">
+              github.Exaral@outlook.com
+            </a>
+          </p>
+
+          <p style="margin:6px 0;color:var(--muted);font-size:13px">Support covers installation, troubleshooting and compatibility assistance for both Linux and Windows environments.</p>
+        </div>
+      </div>
+
+      <!-- Live demo card removed as requested -->
+    </aside>
+
+    <footer>
+      <div style="margin-bottom:8px">© 2026 Simplified Terminal — Exaral. All rights reserved.</div>
+      <div style="font-size:13px;color:var(--muted)">
+        <span style="margin-right:12px">> <a href="https://github.com/Exaral/simplified-terminal" target="_blank" rel="noopener" style="color:var(--neon-cyan);text-decoration:none">github</a></span>
+        <span>> <a href="mailto:contact@exaral.dev" style="color:var(--neon-cyan);text-decoration:none">contact</a></span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Terminal content: user's markdown text typed into the terminal panel.
+    const lines = [
+      { t: "# simplified-terminal", cls: "prompt" },
+      { t: "", cls: "" },
+      { t: "It is a simplified terminal that reduces typing, made ONLY for Linux (Windows support coming soon!). No longer Open-Source.", cls: "stdout" },
+      { t: "", cls: "" },
+      { t: "---", cls: "muted" },
+      { t: "", cls: "" },
+      { t: "### Pricing", cls: "muted" },
+      { t: "* Lifetime License: Currently $0.00 (free), but not open-source.", cls: "" },
+      { t: "* The binary is free to download for now.", cls: "" },
+      { t: "* Futurely paid versions may exist", cls: "" },
+      { t: "", cls: "" },
+      { t: "---", cls: "muted" },
+      { t: "", cls: "" },
+      { t: "### Features", cls: "muted" },
+      { t: "With this tool, you can manage your system faster without typing complex commands:", cls: "" },
+      { t: "* Package Management: Install or remove programs via apt.", cls: "" },
+      { t: "* Disk Tools: Format partitions or disks easily.", cls: "" },
+      { t: "* Flashing: Flash your phone using Heimdall.", cls: "" },
+      { t: "* Compatibility: Run Windows programs via Wine.", cls: "" },
+      { t: "* File Editing: Edit or create text files quickly via nano.", cls: "" },
+      { t: "* File Removal: Permanently remove files via rm.", cls: "" },
+      { t: "* File Creation: Create new folders instantly.", cls: "" },
+      { t: "", cls: "" },
+      { t: "> Note: Changing directories via cd is currently broken and will be removed in the next update.", cls: "muted" },
+      { t: "", cls: "" },
+      { t: "---", cls: "muted" },
+      { t: "", cls: "" },
+      { t: "### Installation Steps", cls: "muted" },
+      { t: "", cls: "" },
+      { t: "1. Download the `simplified-terminal` binary file.", cls: "" },
+      { t: "2. Open your Linux terminal.", cls: "" },
+      { t: "3. Navigate to the folder where the downloaded file is located.", cls: "" },
+      { t: "4. Move the binary to your local system path by running:", cls: "" },
+      { t: "   sudo cp simplified-terminal /usr/local/bin/", cls: "cmd" },
+      { t: "5. Give execution permission to the file:", cls: "" },
+      { t: "   sudo chmod +x /usr/local/bin/simplified-terminal", cls: "cmd" },
+      { t: "", cls: "" },
+      { t: "---", cls: "muted" },
+      { t: "", cls: "" },
+      { t: "### How to Run", cls: "muted" },
+      { t: "", cls: "" },
+      { t: "Now, from any directory in your terminal, simply type:", cls: "" },
+      { t: "   simplified-terminal", cls: "cmd" },
+      { t: "", cls: "" },
+      { t: "And it's DONE!!!", cls: "stdout" },
+      { t: "", cls: "" },
+      { t: "---", cls: "muted" },
+      { t: "", cls: "" },
+      { t: "© 2026 - Exaral. All rights reserved.", cls: "muted" }
+    ];
+
+    const screen = document.getElementById('screen');
+
+    // Typing engine: fast and snappy
+    const baseCharDelay = 4;
+    const randomVariance = 6;
+    const linePause = 60;
+
+    let lineIndex = 0;
+    let charIndex = 0;
+
+    function typeNext() {
+      if (lineIndex >= lines.length) {
+        const cur = document.createElement('span');
+        cur.className = 'cursor';
+        screen.appendChild(cur);
+        screen.scrollTop = screen.scrollHeight;
+        return;
+      }
+
+      const current = lines[lineIndex];
+      if (!current) return;
+
+      if (charIndex === 0) {
+        const div = document.createElement('div');
+        div.className = 'line ' + (current.cls || '');
+        div.setAttribute('data-line', lineIndex);
+        screen.appendChild(div);
+      }
+
+      const lineDiv = screen.querySelector(`.line[data-line="${lineIndex}"]`);
+      const text = current.t;
+
+      if (charIndex < text.length) {
+        lineDiv.textContent += text.charAt(charIndex);
+        charIndex++;
+        screen.scrollTop = screen.scrollHeight;
+        const lastChar = text.charAt(charIndex-1);
+        let delay = baseCharDelay + Math.random() * randomVariance;
+        if (lastChar === ' ') delay = 3;
+        if (/[.,:;!?\-]/.test(lastChar)) delay += 6;
+        setTimeout(typeNext, delay);
+      } else {
+        charIndex = 0;
+        lineIndex++;
+        setTimeout(typeNext, linePause + Math.random() * 40);
+      }
+    }
+
+    // Start typing immediately
+    setTimeout(typeNext, 120);
+
+    // Download button feedback (small UX)
+    const stdoutLine = document.getElementById('stdoutLine');
+    const downloadBtn = document.getElementById('downloadBtn');
+    downloadBtn.addEventListener('click', (e) => {
+      const prev = stdoutLine.textContent;
+      stdoutLine.textContent = "Downloading latest release...";
+      setTimeout(()=> stdoutLine.textContent = prev, 1400);
+    });
+
+    // Copy support email button
+    const copySupportEmail = document.getElementById('copySupportEmail');
+    copySupportEmail.addEventListener('click', async () => {
+      const email = 'github.Exaral@outlook.com';
+      try {
+        await navigator.clipboard.writeText(email);
+        const prev = copySupportEmail.textContent;
+        copySupportEmail.textContent = 'COPIED';
+        setTimeout(()=> copySupportEmail.textContent = prev, 1200);
+      } catch (e) {
+        copySupportEmail.textContent = 'COPY';
+      }
+    });
+
+    // Copy clone button (if present)
+    document.querySelectorAll('.copy-btn').forEach(btn=>{
+      btn.addEventListener('click', async () => {
+        const txt = btn.getAttribute('data-copy') || '';
+        try {
+          await navigator.clipboard.writeText(txt.trim());
+          const prev = btn.textContent;
+          btn.textContent = 'COPIED';
+          setTimeout(()=> btn.textContent = prev, 1200);
+        } catch(e){
+          btn.textContent = 'COPY';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+
