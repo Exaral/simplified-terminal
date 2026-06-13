@@ -5,7 +5,7 @@ It is a simplified terminal that reduces typing, made **ONLY for Linux** (Window
 ---
 
 ### Pricing
-* **Lifetime License:** Only $5.00
+* **Lifetime License:** Only $0.00, its free, but not open-source
 * Secure checkout and instant file delivery.
 
 [Click here to buy and download your copy](INSERT_YOUR_GUMROAD_LINK_HERE)
