@@ -8,10 +8,6 @@ It is a simplified terminal that reduces typing, made **ONLY for Linux** (Window
 * **Lifetime License:** Currently $0.00 (free), but not open-source.
 * The binary is free to download for now. 
 * Futurely paid versions may exist
-
-
-[Click here to buy and download your copy](INSERT_YOUR_GUMROAD_LINK_HERE)
-
 ---
 
 ### Features
