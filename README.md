@@ -5,8 +5,10 @@ It is a simplified terminal that reduces typing, made **ONLY for Linux** (Window
 ---
 
 ### Pricing
-* **Lifetime License:** Only $0.00, its free, but not open-source
-* Secure checkout and instant file delivery.
+* **Lifetime License:** Currently $0.00 (free), but not open-source.
+* The binary is free to download for now. 
+* Future paid versions may be released when legal payment methods are possible.
+
 
 [Click here to buy and download your copy](INSERT_YOUR_GUMROAD_LINK_HERE)
 
